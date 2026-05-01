@@ -1,0 +1,61 @@
+{
+  "name": "@brasil-fiscal/nfse",
+  "version": "0.1.0",
+  "description": "Lib open-source para emissao de NFSe (Nota Fiscal de Servico Eletronica) em TypeScript. Padrao Nacional (ADN/ABRASF).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "tsx --test 'tests/**/*.spec.ts'",
+    "prepublishOnly": "npm run build",
+    "publish:npm": "npm publish --access public --registry=https://registry.npmjs.org",
+    "publish:github": "npm publish --registry=https://npm.pkg.github.com",
+    "publish:all": "npm run publish:npm && npm run publish:github"
+  },
+  "keywords": [
+    "nfse",
+    "nota-fiscal-servico",
+    "sefaz",
+    "fiscal",
+    "brasil",
+    "typescript",
+    "abrasf",
+    "adn"
+  ],
+  "author": {
+    "name": "Raphael Serafim",
+    "url": "https://raphaelvserafim.com/"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brasil-fiscal/nfse.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brasil-fiscal/nfse/issues"
+  },
+  "homepage": "https://github.com/brasil-fiscal/nfse#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.2",
+    "@typescript-eslint/parser": "^8.58.2",
+    "eslint": "^10.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3",
+    "tsc-alias": "^1.8.16",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@brasil-fiscal/core": "^1.0.0"
+  }
+}

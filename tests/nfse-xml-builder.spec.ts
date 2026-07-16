@@ -53,3 +53,20 @@ test('serie e nDPS dos elementos são idênticos aos do Id (zero-padding igual, 
   assert.match(xml, new RegExp(`<serie>${serieId}</serie>`));
   assert.match(xml, new RegExp(`<nDPS>${nDpsId}</nDPS>`));
 });
+
+test('build sem substituicao não emite o grupo subst', () => {
+  const xml = new DefaultNFSeXmlBuilder().build(dps);
+  assert.doesNotMatch(xml, /<subst>/);
+});
+
+test('build emite o grupo subst (chSubstda) após cLocEmi na NFS-e substituta', () => {
+  const chSubst = '4'.repeat(50);
+  const xml = new DefaultNFSeXmlBuilder().build({
+    ...dps,
+    substituicao: { chaveSubstituida: chSubst, cMotivo: 1, xMotivo: 'Correcao de valores' }
+  });
+  assert.match(xml, new RegExp(`<subst><chSubstda>${chSubst}</chSubstda><cMotivo>1</cMotivo><xMotivo>Correcao de valores</xMotivo></subst>`));
+  // subst vem depois de cLocEmi e antes de prest
+  assert.ok(xml.indexOf('<cLocEmi>') < xml.indexOf('<subst>'));
+  assert.ok(xml.indexOf('<subst>') < xml.indexOf('<prest>'));
+});

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync } from 'node:crypto';
 import { NFSeCore } from '../src/core/NFSeCore';
-import { gzipBase64 } from '../src/shared/helpers/compression';
+import { gzipBase64, gunzipBase64 } from '../src/shared/helpers/compression';
 import type { NFSeTransport, NFSeHttpResponse, NFSeBinaryResponse } from '../src/contracts/NFSeTransport';
 import type { CertificateProvider, CertificateData } from '@brasil-fiscal/core';
 import { DPSProps } from '../src/domain/dps';
@@ -126,6 +126,42 @@ test('cancelar assina o evento e envia ao endpoint de eventos da chave', async (
   assert.ok(sentBody.pedidoRegistroEventoXmlGZipB64);
   assert.equal(result.registrado, true);
   assert.equal(result.chaveAcesso, chave);
+});
+
+test('substituir emite nova DPS com o grupo subst e retorna EmitirResult', async () => {
+  const chSubst = '6'.repeat(50);
+  let sentUrl = '';
+  let sentBody: any = null;
+  const transport: NFSeTransport = {
+    async postJson(url, body): Promise<NFSeHttpResponse> {
+      sentUrl = url;
+      sentBody = body;
+      return { statusCode: 201, body: JSON.stringify({ chaveAcesso: '1'.repeat(50), idDps: 'NFS1', nfseXmlGZipB64: gzipBase64('<NFSe/>') }) };
+    },
+    async get(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
+      throw new Error('não usado neste teste');
+    }
+  };
+
+  const core = NFSeCore.create({
+    pfx: Buffer.alloc(0),
+    senha: '',
+    ambiente: 'homologacao',
+    codigoMunicipio: '3106200',
+    certificate: fakeCertProvider(),
+    transport
+  });
+
+  const result = await core.substituir(dps, { chaveSubstituida: chSubst, cMotivo: 1, xMotivo: 'Correcao' });
+
+  assert.equal(sentUrl, 'https://sefin.producaorestrita.nfse.gov.br/SefinNacional/nfse');
+  const enviado = gunzipBase64(sentBody.dpsXmlGZipB64);
+  assert.match(enviado, new RegExp(`<subst><chSubstda>${chSubst}</chSubstda>`));
+  assert.match(enviado, /<Signature/);
+  assert.equal(result.autorizada, true);
 });
 
 test('danfse faz GET binário em /danfse/{chave} e devolve o PDF', async () => {

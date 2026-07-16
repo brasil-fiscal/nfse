@@ -13,7 +13,7 @@ import { CancelarNFSeUseCase } from '../application/use-cases/CancelarNFSeUseCas
 import { BaixarDanfseUseCase } from '../application/use-cases/BaixarDanfseUseCase';
 import { CancelamentoEventoBuilder } from '../infra/xml/CancelamentoEventoBuilder';
 import { getAdnBaseUrl, NFSeEnvironment } from '../shared/constants/adn-urls';
-import { DPSProps } from '../domain/dps';
+import { DPSProps, SubstituicaoDPS } from '../domain/dps';
 import { CancelamentoInput } from '../domain/evento';
 import {
   EmitirResult,
@@ -77,6 +77,15 @@ export class NFSeCore {
     });
 
     return useCase.execute(dpsComDefaults);
+  }
+
+  /**
+   * Substitui uma NFS-e: emite uma nova DPS com o grupo `subst` (chSubstda)
+   * referenciando a nota substituída. Ao processar, o ADN cancela a original.
+   * Retorna o `EmitirResult` da nota substituta.
+   */
+  async substituir(dps: DPSProps, substituicao: SubstituicaoDPS): Promise<EmitirResult> {
+    return this.emitir({ ...dps, substituicao });
   }
 
   /**

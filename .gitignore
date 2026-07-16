@@ -6,3 +6,4 @@ dist
 *.pem
 .DS_Store
 coverage
+*.pdf

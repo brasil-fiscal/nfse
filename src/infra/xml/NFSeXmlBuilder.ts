@@ -83,6 +83,15 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
         tagGroup('trib', tribMun + totTrib)
     );
 
+    const subst = dps.substituicao
+      ? tagGroup(
+          'subst',
+          tag('chSubstda', onlyDigits(dps.substituicao.chaveSubstituida)) +
+            (dps.substituicao.cMotivo !== undefined ? tag('cMotivo', dps.substituicao.cMotivo) : '') +
+            tag('xMotivo', dps.substituicao.xMotivo)
+        )
+      : '';
+
     const infDPS =
       `<infDPS Id="${id}">` +
       tag('tpAmb', ambiente) +
@@ -93,6 +102,7 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
       tag('dCompet', dps.competencia ?? dataCompetencia(dhEmi)) +
       tag('tpEmit', dps.tipoEmitente ?? 1) +
       tag('cLocEmi', cLocEmi) +
+      subst +
       prest +
       toma +
       serv +

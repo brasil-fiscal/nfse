@@ -28,6 +28,16 @@ export type ValoresDPS = {
   readonly percentualTotalTributosSN?: number;   // valores.trib.totTrib.pTotTribSN
 };
 
+/**
+ * Grupo `subst` do infDPS: presente apenas na NFS-e substituta. Ao receber uma
+ * DPS com `chSubstda` preenchida, o ADN cancela a nota original e gera a substituta.
+ */
+export type SubstituicaoDPS = {
+  readonly chaveSubstituida: string; // chSubstda — chave (50) da NFS-e substituída
+  readonly cMotivo?: number;         // cMotivo — código do motivo da substituição
+  readonly xMotivo?: string;         // xMotivo — descrição do motivo
+};
+
 export type DPSProps = {
   readonly ambiente?: DPSAmbiente;               // tpAmb (default preenchido pelo NFSeCore)
   readonly dataEmissao?: Date;                   // dhEmi (default: agora)
@@ -37,6 +47,7 @@ export type DPSProps = {
   readonly competencia?: string;                // dCompet YYYY-MM-DD (default: data de dhEmi)
   readonly tipoEmitente?: 1 | 2 | 3;            // tpEmit (default 1)
   readonly codigoMunicipioEmissor?: string;      // cLocEmi (default: codigoMunicipio do NFSeCore)
+  readonly substituicao?: SubstituicaoDPS;       // grupo subst (somente NFS-e substituta)
   readonly prestador: PrestadorDPS;
   readonly tomador?: TomadorDPS;
   readonly servico: ServicoDPS;

@@ -16,7 +16,8 @@ export type {
   PrestadorDPS,
   TomadorDPS,
   ServicoDPS,
-  ValoresDPS
+  ValoresDPS,
+  SubstituicaoDPS
 } from './domain/dps';
 
 // Domínio (eventos)

@@ -1,7 +1,7 @@
 import { tag, tagGroup, formatNumber, formatDate } from '@brasil-fiscal/core';
 import { NFSeXmlBuilder } from '../../contracts/NFSeXmlBuilder';
 import { DPSProps } from '../../domain/dps';
-import { gerarIdDps } from '../../shared/helpers/dps-id';
+import { gerarIdDps, normalizeSerieDps, normalizeNumeroDps } from '../../shared/helpers/dps-id';
 
 const DPS_NAMESPACE = 'http://www.sped.fazenda.gov.br/nfse';
 const DPS_VERSAO = '1.00';
@@ -88,8 +88,8 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
       tag('tpAmb', ambiente) +
       tag('dhEmi', formatDate(dhEmi)) +
       tag('verAplic', dps.versaoAplicativo ?? DPS_VERSAO) +
-      tag('serie', String(dps.serie).replace(/\D/g, '').padStart(5, '0')) +
-      tag('nDPS', String(dps.numero)) +
+      tag('serie', normalizeSerieDps(dps.serie)) +
+      tag('nDPS', normalizeNumeroDps(dps.numero)) +
       tag('dCompet', dps.competencia ?? dataCompetencia(dhEmi)) +
       tag('tpEmit', dps.tipoEmitente ?? 1) +
       tag('cLocEmi', cLocEmi) +

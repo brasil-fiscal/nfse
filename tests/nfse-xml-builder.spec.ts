@@ -38,3 +38,18 @@ test('build respeita a ordem do XSD e mapeia os campos', () => {
   // </infDPS></DPS> adjacentes (necessário para o signer)
   assert.match(xml, /<\/infDPS><\/DPS>$/);
 });
+
+test('serie e nDPS dos elementos são idênticos aos do Id (zero-padding igual, exigência do ADN)', () => {
+  const xml = new DefaultNFSeXmlBuilder().build({ ...dps, serie: 1, numero: 1 });
+
+  const id = xml.match(/<infDPS Id="(DPS[0-9]{42})">/)![1];
+  const serieId = id.slice(25, 30); // após DPS(3)+cMun(7)+tpInsc(1)+doc(14) = índice 25, 5 dígitos
+  const nDpsId = id.slice(30); // últimos 15 dígitos
+
+  assert.equal(serieId, '00001');
+  assert.equal(nDpsId, '000000000000001');
+
+  // os elementos precisam bater EXATAMENTE com os trechos do Id
+  assert.match(xml, new RegExp(`<serie>${serieId}</serie>`));
+  assert.match(xml, new RegExp(`<nDPS>${nDpsId}</nDPS>`));
+});

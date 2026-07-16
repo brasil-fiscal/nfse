@@ -60,3 +60,26 @@ test('postJson propaga status de erro sem lançar', async () => {
     server.close();
   }
 });
+
+test('get envia GET no path informado e retorna status/corpo', async () => {
+  const seen: { method?: string; path?: string } = {};
+  const server = createServer((req, res) => {
+    seen.method = req.method;
+    seen.path = req.url;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ chaveAcesso: '9'.repeat(50), nfseXmlGZipB64: 'x' }));
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  const port = (server.address() as AddressInfo).port;
+  const chave = '9'.repeat(50);
+
+  try {
+    const res = await new NFSeHttpTransport().get(`http://127.0.0.1:${port}/SefinNacional/nfse/${chave}`, fakeCert);
+    assert.equal(res.statusCode, 200);
+    assert.equal(JSON.parse(res.body).chaveAcesso, chave);
+    assert.equal(seen.method, 'GET');
+    assert.equal(seen.path, `/SefinNacional/nfse/${chave}`);
+  } finally {
+    server.close();
+  }
+});

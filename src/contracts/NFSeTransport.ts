@@ -7,4 +7,5 @@ export type NFSeHttpResponse = {
 
 export interface NFSeTransport {
   postJson(url: string, body: unknown, cert: CertificateData): Promise<NFSeHttpResponse>;
+  get(url: string, cert: CertificateData): Promise<NFSeHttpResponse>;
 }

@@ -54,6 +54,9 @@ test('execute envia DPS assinada em gzip+base64 e parseia a NFS-e autorizada', a
         statusCode: 201,
         body: JSON.stringify({ chaveAcesso: '3'.repeat(50), idDps: 'NFS123', nfseXmlGZipB64: gzipBase64('<NFSe>ok</NFSe>'), alertas: null })
       };
+    },
+    async get(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
     }
   };
 
@@ -76,6 +79,9 @@ test('execute lança NFSeRejectError em resposta 400', async () => {
   const transport: NFSeTransport = {
     async postJson(): Promise<NFSeHttpResponse> {
       return { statusCode: 400, body: JSON.stringify({ erros: [{ Codigo: 'E0712', Descricao: 'indicador inválido' }] }) };
+    },
+    async get(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
     }
   };
   await assert.rejects(

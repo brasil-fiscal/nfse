@@ -1,7 +1,7 @@
 // Core
 export { NFSeCore } from './core/NFSeCore';
 export type { NFSeCoreConfig, NFSeAmbiente } from './core/NFSeCore';
-export type { EmitirResult } from './core/types';
+export type { EmitirResult, ConsultarResult } from './core/types';
 
 // Domínio (DPS)
 export type {

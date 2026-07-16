@@ -33,6 +33,9 @@ test('emitir usa a URL de homologação e preenche defaults (tpAmb, cLocEmi)', a
     async postJson(url): Promise<NFSeHttpResponse> {
       sentUrl = url;
       return { statusCode: 201, body: JSON.stringify({ chaveAcesso: '9'.repeat(50), idDps: 'NFS1', nfseXmlGZipB64: gzipBase64('<NFSe/>') }) };
+    },
+    async get(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
     }
   };
 
@@ -49,4 +52,32 @@ test('emitir usa a URL de homologação e preenche defaults (tpAmb, cLocEmi)', a
   assert.equal(sentUrl, 'https://sefin.producaorestrita.nfse.gov.br/SefinNacional/nfse');
   assert.equal(result.autorizada, true);
   assert.equal(result.chaveAcesso, '9'.repeat(50));
+});
+
+test('consultar faz GET na URL de homologação com a chave e retorna a NFS-e', async () => {
+  const chave = '7'.repeat(50);
+  let sentUrl = '';
+  const transport: NFSeTransport = {
+    async postJson(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
+    },
+    async get(url): Promise<NFSeHttpResponse> {
+      sentUrl = url;
+      return { statusCode: 200, body: JSON.stringify({ chaveAcesso: chave, nfseXmlGZipB64: gzipBase64('<NFSe>x</NFSe>') }) };
+    }
+  };
+
+  const core = NFSeCore.create({
+    pfx: Buffer.alloc(0),
+    senha: '',
+    ambiente: 'homologacao',
+    codigoMunicipio: '3106200',
+    certificate: fakeCertProvider(),
+    transport
+  });
+
+  const result = await core.consultar(chave);
+  assert.equal(sentUrl, `https://sefin.producaorestrita.nfse.gov.br/SefinNacional/nfse/${chave}`);
+  assert.equal(result.encontrada, true);
+  assert.equal(result.xmlNfse, '<NFSe>x</NFSe>');
 });

@@ -6,9 +6,10 @@ import { DefaultNFSeXmlBuilder } from '../infra/xml/NFSeXmlBuilder';
 import { NFSeXmlSigner } from '../infra/xml/NFSeXmlSigner';
 import { NFSeHttpTransport } from '../infra/http/NFSeHttpTransport';
 import { EmitirNFSeUseCase } from '../application/use-cases/EmitirNFSeUseCase';
+import { ConsultarNFSeUseCase } from '../application/use-cases/ConsultarNFSeUseCase';
 import { getAdnBaseUrl, NFSeEnvironment } from '../shared/constants/adn-urls';
 import { DPSProps } from '../domain/dps';
-import { EmitirResult } from './types';
+import { EmitirResult, ConsultarResult } from './types';
 
 export type NFSeAmbiente = NFSeEnvironment; // 'homologacao' | 'producao'
 
@@ -66,7 +67,20 @@ export class NFSeCore {
     return useCase.execute(dpsComDefaults);
   }
 
-  // TODO: consultar() — GET /nfse/{chave}
+  /**
+   * Consulta uma NFS-e no ADN pela chave de acesso (50 dígitos).
+   * Retorna `encontrada: false` quando o ADN responde 404.
+   */
+  async consultar(chaveAcesso: string): Promise<ConsultarResult> {
+    const useCase = new ConsultarNFSeUseCase({
+      certificate: this.certificate,
+      transport: this.transport,
+      baseUrl: getAdnBaseUrl(this.ambiente)
+    });
+
+    return useCase.execute(chaveAcesso);
+  }
+
   // TODO: cancelar() — evento de cancelamento
   // TODO: danfse() — PDF do DANFSe
 }

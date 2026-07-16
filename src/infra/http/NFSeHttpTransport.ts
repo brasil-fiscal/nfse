@@ -10,20 +10,34 @@ import { NFSeTransport, NFSeHttpResponse } from '../../contracts/NFSeTransport';
  */
 export class NFSeHttpTransport implements NFSeTransport {
   postJson(url: string, body: unknown, cert: CertificateData): Promise<NFSeHttpResponse> {
+    return this.send('POST', url, cert, Buffer.from(JSON.stringify(body), 'utf-8'));
+  }
+
+  get(url: string, cert: CertificateData): Promise<NFSeHttpResponse> {
+    return this.send('GET', url, cert);
+  }
+
+  private send(
+    method: 'POST' | 'GET',
+    url: string,
+    cert: CertificateData,
+    payload?: Buffer
+  ): Promise<NFSeHttpResponse> {
     const parsed = new URL(url);
     const isHttps = parsed.protocol === 'https:';
-    const payload = Buffer.from(JSON.stringify(body), 'utf-8');
+
+    const headers: Record<string, string | number> = { Accept: 'application/json' };
+    if (payload) {
+      headers['Content-Type'] = 'application/json';
+      headers['Content-Length'] = payload.length;
+    }
 
     const options: Record<string, unknown> = {
-      method: 'POST',
+      method,
       hostname: parsed.hostname,
       port: parsed.port || (isHttps ? 443 : 80),
       path: `${parsed.pathname}${parsed.search}`,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'Content-Length': payload.length
-      }
+      headers
     };
     if (isHttps) {
       options.pfx = cert.pfx;
@@ -41,7 +55,7 @@ export class NFSeHttpTransport implements NFSeTransport {
         );
       });
       req.on('error', reject);
-      req.write(payload);
+      if (payload) req.write(payload);
       req.end();
     });
   }

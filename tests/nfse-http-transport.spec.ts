@@ -83,3 +83,26 @@ test('get envia GET no path informado e retorna status/corpo', async () => {
     server.close();
   }
 });
+
+test('getBinary retorna os bytes crus (Buffer) sem corromper', async () => {
+  // bytes que não são UTF-8 válido — provam que não há decodificação
+  const pdfBytes = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x00, 0xff, 0xfe, 0x80]);
+  let seenMethod = '';
+  const server = createServer((req, res) => {
+    seenMethod = req.method ?? '';
+    res.writeHead(200, { 'Content-Type': 'application/pdf' });
+    res.end(pdfBytes);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  const port = (server.address() as AddressInfo).port;
+
+  try {
+    const res = await new NFSeHttpTransport().getBinary(`http://127.0.0.1:${port}/SefinNacional/danfse/x`, fakeCert);
+    assert.equal(res.statusCode, 200);
+    assert.ok(Buffer.isBuffer(res.body));
+    assert.deepEqual(res.body, pdfBytes);
+    assert.equal(seenMethod, 'GET');
+  } finally {
+    server.close();
+  }
+});

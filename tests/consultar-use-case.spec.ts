@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { ConsultarNFSeUseCase } from '../src/application/use-cases/ConsultarNFSeUseCase';
 import { NFSeRejectError } from '../src/shared/errors/NFSeRejectError';
 import { gzipBase64 } from '../src/shared/helpers/compression';
-import type { NFSeTransport, NFSeHttpResponse } from '../src/contracts/NFSeTransport';
+import type { NFSeTransport, NFSeHttpResponse, NFSeBinaryResponse } from '../src/contracts/NFSeTransport';
 import type { CertificateProvider, CertificateData } from '@brasil-fiscal/core';
 
 const CHAVE = '3'.repeat(50);
@@ -36,6 +36,9 @@ test('execute faz GET /nfse/{chave} e parseia a NFS-e encontrada', async () => {
     async get(url): Promise<NFSeHttpResponse> {
       sentUrl = url;
       return { statusCode: 200, body: JSON.stringify({ chaveAcesso: CHAVE, nfseXmlGZipB64: gzipBase64('<NFSe>ok</NFSe>') }) };
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
+      throw new Error('não usado neste teste');
     }
   };
 
@@ -55,6 +58,9 @@ test('execute retorna encontrada=false em 404 (sem lançar)', async () => {
     },
     async get(): Promise<NFSeHttpResponse> {
       return { statusCode: 404, body: JSON.stringify({ erros: [{ Codigo: 'E0001', Descricao: 'não encontrada' }] }) };
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
+      throw new Error('não usado neste teste');
     }
   };
 
@@ -72,6 +78,9 @@ test('execute lança NFSeRejectError em erro não-2xx que não seja 404', async 
     },
     async get(): Promise<NFSeHttpResponse> {
       return { statusCode: 500, body: JSON.stringify({ erros: [{ Codigo: 'E9999', Descricao: 'erro interno' }] }) };
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
+      throw new Error('não usado neste teste');
     }
   };
 

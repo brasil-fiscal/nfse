@@ -5,7 +5,13 @@ export type NFSeHttpResponse = {
   readonly body: string;
 };
 
+export type NFSeBinaryResponse = {
+  readonly statusCode: number;
+  readonly body: Buffer;
+};
+
 export interface NFSeTransport {
   postJson(url: string, body: unknown, cert: CertificateData): Promise<NFSeHttpResponse>;
   get(url: string, cert: CertificateData): Promise<NFSeHttpResponse>;
+  getBinary(url: string, cert: CertificateData): Promise<NFSeBinaryResponse>;
 }

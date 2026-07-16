@@ -61,3 +61,23 @@ test('sign lança erro se não houver infDPS', () => {
   const { cert } = makeCert();
   assert.throws(() => new NFSeXmlSigner().sign('<DPS></DPS>', cert), /infDPS/);
 });
+
+test('parametrizado para eventos: assina infPedReg e insere Signature irmã', () => {
+  const { cert, publicKeyPem } = makeCert();
+  const xml =
+    '<pedidoRegistroEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">' +
+    '<infPedReg Id="PRE123"><tpAmb>2</tpAmb></infPedReg></pedidoRegistroEvento>';
+
+  const signed = new NFSeXmlSigner('infPedReg', 'pedidoRegistroEvento').sign(xml, cert);
+
+  assert.match(signed, /<Reference URI="#PRE123">/);
+  assert.ok(signed.indexOf('</infPedReg>') < signed.indexOf('<Signature'));
+  assert.ok(signed.indexOf('<Signature') < signed.indexOf('</pedidoRegistroEvento>'));
+
+  // assinatura válida
+  const signedInfo = signed.match(/<SignedInfo[\s\S]*?<\/SignedInfo>/)![0];
+  const signatureValue = signed.match(/<SignatureValue>([^<]+)<\/SignatureValue>/)![1];
+  const verifier = createVerify('RSA-SHA256');
+  verifier.update(canonicalize(signedInfo));
+  assert.equal(verifier.verify(publicKeyPem, signatureValue, 'base64'), true);
+});

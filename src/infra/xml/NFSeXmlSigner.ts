@@ -8,23 +8,29 @@ const ENVELOPED_SIGNATURE = 'http://www.w3.org/2000/09/xmldsig#enveloped-signatu
 const SHA256_ALGORITHM = 'http://www.w3.org/2001/04/xmlenc#sha256';
 const RSA_SHA256_ALGORITHM = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
 
-const ELEMENT_NAME = 'infDPS';
-const PARENT_ELEMENT = 'DPS';
-
 /**
- * Assinador XMLDSig SHA-256 para a DPS da NFS-e Nacional.
- * Assina o elemento <infDPS> (enveloped) e insere a <Signature> como irmã,
- * logo após </infDPS>, dentro de <DPS>.
+ * Assinador XMLDSig SHA-256 da NFS-e Nacional.
+ * Assina um elemento (enveloped) e insere a <Signature> como irmã, logo após
+ * o fechamento do elemento, dentro do elemento pai.
+ *
+ * Por padrão assina a DPS (<infDPS> dentro de <DPS>). Para eventos, instancie
+ * com ('infPedReg', 'pedidoRegistroEvento').
  */
 export class NFSeXmlSigner implements XmlSigner {
+  constructor(
+    private readonly elementName: string = 'infDPS',
+    private readonly parentElement: string = 'DPS'
+  ) {}
+
   sign(xml: string, certificate: CertificateData): string {
-    const match = xml.match(new RegExp(`<${ELEMENT_NAME}[^>]*>[\\s\\S]*<\\/${ELEMENT_NAME}>`));
+    const { elementName, parentElement } = this;
+    const match = xml.match(new RegExp(`<${elementName}[^>]*>[\\s\\S]*<\\/${elementName}>`));
     if (!match) {
-      throw new Error(`Elemento <${ELEMENT_NAME}> não encontrado no XML da DPS`);
+      throw new Error(`Elemento <${elementName}> não encontrado no XML`);
     }
     const idMatch = match[0].match(/Id="([^"]+)"/);
     if (!idMatch) {
-      throw new Error(`Atributo Id não encontrado em <${ELEMENT_NAME}>`);
+      throw new Error(`Atributo Id não encontrado em <${elementName}>`);
     }
     const id = idMatch[1];
 
@@ -63,18 +69,19 @@ export class NFSeXmlSigner implements XmlSigner {
       `</Signature>`;
 
     return xml.replace(
-      `</${ELEMENT_NAME}></${PARENT_ELEMENT}>`,
-      `</${ELEMENT_NAME}>${signature}</${PARENT_ELEMENT}>`
+      `</${elementName}></${parentElement}>`,
+      `</${elementName}>${signature}</${parentElement}>`
     );
   }
 
   /**
-   * Propaga os namespaces declarados em <DPS ...> para o elemento <infDPS>,
+   * Propaga os namespaces declarados no elemento pai para o elemento assinado,
    * de modo que a canonicalização inclua os namespaces efetivos no digest.
    */
   private propagateNamespaces(xml: string, element: string): string {
+    const { elementName, parentElement } = this;
     const nsRegex = /xmlns(?::[\w]+)?="[^"]+"/g;
-    const parentMatch = xml.match(new RegExp(`<${PARENT_ELEMENT}[^>]*>`));
+    const parentMatch = xml.match(new RegExp(`<${parentElement}[^>]*>`));
     const parentNs: string[] = [];
     if (parentMatch) {
       let m: RegExpExecArray | null;
@@ -84,12 +91,12 @@ export class NFSeXmlSigner implements XmlSigner {
     }
     if (parentNs.length === 0) return element;
 
-    const openMatch = element.match(new RegExp(`^<${ELEMENT_NAME}([^>]*)>`));
+    const openMatch = element.match(new RegExp(`^<${elementName}([^>]*)>`));
     if (!openMatch) return element;
     const existing = openMatch[1];
     const missing = parentNs.filter((ns) => !existing.includes(ns));
     if (missing.length === 0) return element;
 
-    return element.replace(new RegExp(`^<${ELEMENT_NAME}`), `<${ELEMENT_NAME} ${missing.join(' ')}`);
+    return element.replace(new RegExp(`^<${elementName}`), `<${elementName} ${missing.join(' ')}`);
   }
 }

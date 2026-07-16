@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { generateKeyPairSync } from 'node:crypto';
 import { NFSeCore } from '../src/core/NFSeCore';
 import { gzipBase64 } from '../src/shared/helpers/compression';
-import type { NFSeTransport, NFSeHttpResponse } from '../src/contracts/NFSeTransport';
+import type { NFSeTransport, NFSeHttpResponse, NFSeBinaryResponse } from '../src/contracts/NFSeTransport';
 import type { CertificateProvider, CertificateData } from '@brasil-fiscal/core';
 import { DPSProps } from '../src/domain/dps';
 
@@ -36,6 +36,9 @@ test('emitir usa a URL de homologação e preenche defaults (tpAmb, cLocEmi)', a
     },
     async get(): Promise<NFSeHttpResponse> {
       throw new Error('não usado neste teste');
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
+      throw new Error('não usado neste teste');
     }
   };
 
@@ -64,6 +67,9 @@ test('consultar faz GET na URL de homologação com a chave e retorna a NFS-e', 
     async get(url): Promise<NFSeHttpResponse> {
       sentUrl = url;
       return { statusCode: 200, body: JSON.stringify({ chaveAcesso: chave, nfseXmlGZipB64: gzipBase64('<NFSe>x</NFSe>') }) };
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
+      throw new Error('não usado neste teste');
     }
   };
 
@@ -80,4 +86,75 @@ test('consultar faz GET na URL de homologação com a chave e retorna a NFS-e', 
   assert.equal(sentUrl, `https://sefin.producaorestrita.nfse.gov.br/SefinNacional/nfse/${chave}`);
   assert.equal(result.encontrada, true);
   assert.equal(result.xmlNfse, '<NFSe>x</NFSe>');
+});
+
+test('cancelar assina o evento e envia ao endpoint de eventos da chave', async () => {
+  const chave = '5'.repeat(50);
+  let sentUrl = '';
+  let sentBody: any = null;
+  const transport: NFSeTransport = {
+    async postJson(url, body): Promise<NFSeHttpResponse> {
+      sentUrl = url;
+      sentBody = body;
+      return { statusCode: 200, body: JSON.stringify({ eventoXmlGZipB64: gzipBase64('<evento/>') }) };
+    },
+    async get(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
+      throw new Error('não usado neste teste');
+    }
+  };
+
+  const core = NFSeCore.create({
+    pfx: Buffer.alloc(0),
+    senha: '',
+    ambiente: 'homologacao',
+    codigoMunicipio: '3106200',
+    certificate: fakeCertProvider(),
+    transport
+  });
+
+  const result = await core.cancelar({
+    chaveAcesso: chave,
+    cMotivo: 1,
+    xMotivo: 'Cancelamento por erro na emissao da nota',
+    autorCnpj: '50516724000160'
+  });
+
+  assert.equal(sentUrl, `https://sefin.producaorestrita.nfse.gov.br/SefinNacional/nfse/${chave}/eventos`);
+  assert.ok(sentBody.pedidoRegistroEventoXmlGZipB64);
+  assert.equal(result.registrado, true);
+  assert.equal(result.chaveAcesso, chave);
+});
+
+test('danfse faz GET binário em /danfse/{chave} e devolve o PDF', async () => {
+  const chave = '8'.repeat(50);
+  const pdf = Buffer.from([0x25, 0x50, 0x44, 0x46]);
+  let sentUrl = '';
+  const transport: NFSeTransport = {
+    async postJson(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
+    },
+    async get(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
+    },
+    async getBinary(url): Promise<NFSeBinaryResponse> {
+      sentUrl = url;
+      return { statusCode: 200, body: pdf };
+    }
+  };
+
+  const core = NFSeCore.create({
+    pfx: Buffer.alloc(0),
+    senha: '',
+    ambiente: 'homologacao',
+    codigoMunicipio: '3106200',
+    certificate: fakeCertProvider(),
+    transport
+  });
+
+  const result = await core.danfse(chave);
+  assert.equal(sentUrl, `https://sefin.producaorestrita.nfse.gov.br/SefinNacional/danfse/${chave}`);
+  assert.deepEqual(result, pdf);
 });

@@ -6,7 +6,7 @@ import { DefaultNFSeXmlBuilder } from '../src/infra/xml/NFSeXmlBuilder';
 import { NFSeXmlSigner } from '../src/infra/xml/NFSeXmlSigner';
 import { NFSeRejectError } from '../src/shared/errors/NFSeRejectError';
 import { gzipBase64, gunzipBase64 } from '../src/shared/helpers/compression';
-import type { NFSeTransport, NFSeHttpResponse } from '../src/contracts/NFSeTransport';
+import type { NFSeTransport, NFSeHttpResponse, NFSeBinaryResponse } from '../src/contracts/NFSeTransport';
 import type { CertificateProvider, CertificateData } from '@brasil-fiscal/core';
 import { DPSProps } from '../src/domain/dps';
 
@@ -57,6 +57,9 @@ test('execute envia DPS assinada em gzip+base64 e parseia a NFS-e autorizada', a
     },
     async get(): Promise<NFSeHttpResponse> {
       throw new Error('não usado neste teste');
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
+      throw new Error('não usado neste teste');
     }
   };
 
@@ -81,6 +84,9 @@ test('execute lança NFSeRejectError em resposta 400', async () => {
       return { statusCode: 400, body: JSON.stringify({ erros: [{ Codigo: 'E0712', Descricao: 'indicador inválido' }] }) };
     },
     async get(): Promise<NFSeHttpResponse> {
+      throw new Error('não usado neste teste');
+    },
+    async getBinary(): Promise<NFSeBinaryResponse> {
       throw new Error('não usado neste teste');
     }
   };

@@ -9,8 +9,8 @@
 export type NFSeEnvironment = 'homologacao' | 'producao';
 
 const ADN_URLS: Record<NFSeEnvironment, string> = {
-  homologacao: 'https://sefin.nfse.gov.br/sefinnacional',
-  producao: 'https://sefin.nfse.gov.br/sefinnacional'
+  homologacao: 'https://sefin.producaorestrita.nfse.gov.br/SefinNacional',
+  producao: 'https://sefin.nfse.gov.br/SefinNacional'
 };
 
 /**

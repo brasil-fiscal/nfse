@@ -1,6 +1,6 @@
 {
   "name": "@brasil-fiscal/nfse",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Lib open-source para emissao de NFSe (Nota Fiscal de Servico Eletronica) em TypeScript. Padrao Nacional (ADN/ABRASF).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

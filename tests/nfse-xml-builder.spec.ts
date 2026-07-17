@@ -67,6 +67,32 @@ test('sem Simples Nacional/retenção: emite regEspTrib=0, tpRetISSQN=1 e totTri
   assert.match(xml, /<totTrib><indTotTrib>0<\/indTotTrib><\/totTrib>/);
 });
 
+test('tomador sem CPF/CNPJ (só nome): OMITE o grupo toma (XSD exige identificação)', () => {
+  const xml = new DefaultNFSeXmlBuilder().build({
+    ...dps,
+    tomador: { nome: 'Consumidor sem doc', telefone: '5566999105172' }
+  });
+  assert.doesNotMatch(xml, /<toma>/);
+  // segue direto de </prest> para <serv>
+  assert.ok(xml.indexOf('</prest>') < xml.indexOf('<serv>'));
+});
+
+test('tomador com CPF vazio/inválido: OMITE o grupo toma', () => {
+  const xml = new DefaultNFSeXmlBuilder().build({
+    ...dps,
+    tomador: { cpf: '', nome: 'Sem doc' }
+  });
+  assert.doesNotMatch(xml, /<toma>/);
+});
+
+test('tomador com CPF: emite toma com <CPF>', () => {
+  const xml = new DefaultNFSeXmlBuilder().build({
+    ...dps,
+    tomador: { cpf: '12345678909', nome: 'Fulano' }
+  });
+  assert.match(xml, /<toma><CPF>12345678909<\/CPF><xNome>Fulano<\/xNome><\/toma>/);
+});
+
 test('build sem substituicao não emite o grupo subst', () => {
   const xml = new DefaultNFSeXmlBuilder().build(dps);
   assert.doesNotMatch(xml, /<subst>/);

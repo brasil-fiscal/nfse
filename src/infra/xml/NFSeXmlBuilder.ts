@@ -59,19 +59,26 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
         regTrib
     );
 
-    const toma = dps.tomador
-      ? tagGroup(
-          'toma',
-          (dps.tomador.cnpj
-            ? tag('CNPJ', onlyDigits(dps.tomador.cnpj))
-            : dps.tomador.cpf
-              ? tag('CPF', onlyDigits(dps.tomador.cpf))
-              : '') +
-            tag('xNome', dps.tomador.nome) +
-            tag('fone', dps.tomador.telefone) +
-            tag('email', dps.tomador.email)
-        )
+    // toma (TCInfoPessoa) exige identificação (CNPJ/CPF/NIF/cNaoNIF) como 1º
+    // elemento no XSD. Sem documento válido, o grupo é OMITIDO — NFS-e a
+    // consumidor não identificado — para não gerar <toma> sem id (rejeição E1235).
+    const tomaId = dps.tomador
+      ? dps.tomador.cnpj
+        ? tag('CNPJ', onlyDigits(dps.tomador.cnpj))
+        : dps.tomador.cpf
+          ? tag('CPF', onlyDigits(dps.tomador.cpf))
+          : ''
       : '';
+    const toma =
+      dps.tomador && tomaId
+        ? tagGroup(
+            'toma',
+            tomaId +
+              tag('xNome', dps.tomador.nome) +
+              tag('fone', dps.tomador.telefone) +
+              tag('email', dps.tomador.email)
+          )
+        : '';
 
     const serv = tagGroup(
       'serv',

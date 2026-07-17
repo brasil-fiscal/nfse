@@ -4,7 +4,9 @@ export type PrestadorDPS = {
   readonly cnpj?: string;
   readonly cpf?: string;
   readonly inscricaoMunicipal?: string;          // IM
-  readonly optanteSimplesNacional?: 1 | 2 | 3;   // regTrib.opSimpNac (1=Não, 2=MEI, 3=ME/EPP)
+  readonly optanteSimplesNacional?: 1 | 2 | 3;   // regTrib.opSimpNac (1=Não, 2=MEI, 3=ME/EPP) — default 1
+  readonly regimeApuracaoSN?: 1 | 2 | 3;         // regTrib.regApTribSN (opcional, só opSimpNac=3)
+  readonly regimeEspecialTributacao?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // regTrib.regEspTrib (obrigatório, default 0=Nenhum)
 };
 
 export type TomadorDPS = {
@@ -24,8 +26,8 @@ export type ServicoDPS = {
 export type ValoresDPS = {
   readonly valorServico: number;                 // valores.vServPrest.vServ
   readonly tributacaoISSQN?: 1 | 2 | 3 | 4;      // valores.trib.tribMun.tribISSQN (default 1)
-  readonly retencaoISSQN?: 1 | 2;                // valores.trib.tribMun.tpRetISSQN
-  readonly percentualTotalTributosSN?: number;   // valores.trib.totTrib.pTotTribSN
+  readonly retencaoISSQN?: 1 | 2 | 3;            // valores.trib.tribMun.tpRetISSQN (obrigatório, default 1=Não retido)
+  readonly percentualTotalTributosSN?: number;   // valores.trib.totTrib.pTotTribSN; sem ele → indTotTrib=0
 };
 
 /**

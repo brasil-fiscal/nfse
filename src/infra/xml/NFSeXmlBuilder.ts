@@ -1,13 +1,20 @@
 import { tag, tagGroup, formatNumber, formatDate } from '@brasil-fiscal/core';
 import { NFSeXmlBuilder } from '../../contracts/NFSeXmlBuilder';
 import { DPSProps } from '../../domain/dps';
-import { gerarIdDps, normalizeSerieDps, normalizeNumeroDps } from '../../shared/helpers/dps-id';
+import { gerarIdDps, normalizeSerieDps } from '../../shared/helpers/dps-id';
 
 const DPS_NAMESPACE = 'http://www.sped.fazenda.gov.br/nfse';
 const DPS_VERSAO = '1.00';
 
 function onlyDigits(v: string): string {
   return v.replace(/\D/g, '');
+}
+
+// Elemento nDPS não aceita zero à esquerda (TSNumDPS: [1-9]{1}[0-9]{0,14}).
+// O zero-padding vale só para o Id; o elemento vai com o número "cru".
+function numeroDpsElemento(v: string | number): string {
+  const d = onlyDigits(String(v)).replace(/^0+/, '');
+  return d === '' ? '0' : d;
 }
 
 function dataCompetencia(date: Date): string {
@@ -33,15 +40,23 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
       numeroDps: dps.numero
     });
 
+    // regTrib é obrigatório no prest e exige opSimpNac + regEspTrib (regApTribSN é opcional).
+    const regTrib = tagGroup(
+      'regTrib',
+      tag('opSimpNac', dps.prestador.optanteSimplesNacional ?? 1) +
+        (dps.prestador.regimeApuracaoSN !== undefined
+          ? tag('regApTribSN', dps.prestador.regimeApuracaoSN)
+          : '') +
+        tag('regEspTrib', dps.prestador.regimeEspecialTributacao ?? 0)
+    );
+
     const prest = tagGroup(
       'prest',
       (dps.prestador.cnpj
         ? tag('CNPJ', onlyDigits(dps.prestador.cnpj))
         : tag('CPF', onlyDigits(dps.prestador.cpf ?? ''))) +
         tag('IM', dps.prestador.inscricaoMunicipal) +
-        (dps.prestador.optanteSimplesNacional !== undefined
-          ? tagGroup('regTrib', tag('opSimpNac', dps.prestador.optanteSimplesNacional))
-          : '')
+        regTrib
     );
 
     const toma = dps.tomador
@@ -68,15 +83,19 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
         )
     );
 
+    // tpRetISSQN é obrigatório (TCTribMunicipal); default 1 = Não retido.
     const tribMun = tagGroup(
       'tribMun',
       tag('tribISSQN', dps.valores.tributacaoISSQN ?? 1) +
-        (dps.valores.retencaoISSQN !== undefined ? tag('tpRetISSQN', dps.valores.retencaoISSQN) : '')
+        tag('tpRetISSQN', dps.valores.retencaoISSQN ?? 1)
     );
-    const totTrib =
+    // totTrib é obrigatório dentro de trib; sem pTotTribSN, usa indTotTrib=0 (não informar).
+    const totTrib = tagGroup(
+      'totTrib',
       dps.valores.percentualTotalTributosSN !== undefined
-        ? tagGroup('totTrib', tag('pTotTribSN', formatNumber(dps.valores.percentualTotalTributosSN, 2)))
-        : '';
+        ? tag('pTotTribSN', formatNumber(dps.valores.percentualTotalTributosSN, 2))
+        : tag('indTotTrib', 0)
+    );
     const valores = tagGroup(
       'valores',
       tagGroup('vServPrest', tag('vServ', formatNumber(dps.valores.valorServico, 2))) +
@@ -98,7 +117,7 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
       tag('dhEmi', formatDate(dhEmi)) +
       tag('verAplic', dps.versaoAplicativo ?? DPS_VERSAO) +
       tag('serie', normalizeSerieDps(dps.serie)) +
-      tag('nDPS', normalizeNumeroDps(dps.numero)) +
+      tag('nDPS', numeroDpsElemento(dps.numero)) +
       tag('dCompet', dps.competencia ?? dataCompetencia(dhEmi)) +
       tag('tpEmit', dps.tipoEmitente ?? 1) +
       tag('cLocEmi', cLocEmi) +

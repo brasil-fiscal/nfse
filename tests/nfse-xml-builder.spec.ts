@@ -30,7 +30,7 @@ test('build respeita a ordem do XSD e mapeia os campos', () => {
   assert.ok(xml.indexOf('<cLocEmi>') < xml.indexOf('<prest>'));
   assert.ok(xml.indexOf('<prest>') < xml.indexOf('<serv>'));
   assert.ok(xml.indexOf('<serv>') < xml.indexOf('<valores>'));
-  assert.match(xml, /<prest><CNPJ>50516724000160<\/CNPJ><IM>14701490012<\/IM><regTrib><opSimpNac>3<\/opSimpNac><\/regTrib><\/prest>/);
+  assert.match(xml, /<prest><CNPJ>50516724000160<\/CNPJ><IM>14701490012<\/IM><regTrib><opSimpNac>3<\/opSimpNac><regEspTrib>0<\/regEspTrib><\/regTrib><\/prest>/);
   assert.match(xml, /<cServ><cTribNac>010501<\/cTribNac><xDescServ>Assinatura SaaS<\/xDescServ><\/cServ>/);
   assert.match(xml, /<vServPrest><vServ>169\.00<\/vServ><\/vServPrest>/);
   assert.match(xml, /<tribMun><tribISSQN>1<\/tribISSQN><tpRetISSQN>1<\/tpRetISSQN><\/tribMun>/);
@@ -39,19 +39,32 @@ test('build respeita a ordem do XSD e mapeia os campos', () => {
   assert.match(xml, /<\/infDPS><\/DPS>$/);
 });
 
-test('serie e nDPS dos elementos são idênticos aos do Id (zero-padding igual, exigência do ADN)', () => {
+test('Id mantém zero-padding, mas o elemento nDPS vai SEM zero à esquerda (TSNumDPS: [1-9]{1}[0-9]{0,14})', () => {
   const xml = new DefaultNFSeXmlBuilder().build({ ...dps, serie: 1, numero: 1 });
 
   const id = xml.match(/<infDPS Id="(DPS[0-9]{42})">/)![1];
   const serieId = id.slice(25, 30); // após DPS(3)+cMun(7)+tpInsc(1)+doc(14) = índice 25, 5 dígitos
   const nDpsId = id.slice(30); // últimos 15 dígitos
 
+  // o Id é de posição fixa: serie(5) + nDPS(15) zero-padded
   assert.equal(serieId, '00001');
   assert.equal(nDpsId, '000000000000001');
 
-  // os elementos precisam bater EXATAMENTE com os trechos do Id
-  assert.match(xml, new RegExp(`<serie>${serieId}</serie>`));
-  assert.match(xml, new RegExp(`<nDPS>${nDpsId}</nDPS>`));
+  // serie: elemento pode manter o zero-padding (TSSerieDPS é string 1..5)
+  assert.match(xml, /<serie>00001<\/serie>/);
+  // nDPS: elemento NÃO aceita zero à esquerda — vai o número cru
+  assert.match(xml, /<nDPS>1<\/nDPS>/);
+});
+
+test('sem Simples Nacional/retenção: emite regEspTrib=0, tpRetISSQN=1 e totTrib com indTotTrib=0', () => {
+  const xml = new DefaultNFSeXmlBuilder().build({
+    ...dps,
+    prestador: { cnpj: '50516724000160', inscricaoMunicipal: '14701490012' },
+    valores: { valorServico: 74 }
+  });
+  assert.match(xml, /<regTrib><opSimpNac>1<\/opSimpNac><regEspTrib>0<\/regEspTrib><\/regTrib>/);
+  assert.match(xml, /<tribMun><tribISSQN>1<\/tribISSQN><tpRetISSQN>1<\/tpRetISSQN><\/tribMun>/);
+  assert.match(xml, /<totTrib><indTotTrib>0<\/indTotTrib><\/totTrib>/);
 });
 
 test('build sem substituicao não emite o grupo subst', () => {

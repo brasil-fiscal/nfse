@@ -31,6 +31,19 @@ export type ValoresDPS = {
 };
 
 /**
+ * Grupo IBS/CBS da DPS (Reforma Tributária — NT 007/2026).
+ * Declara a situação tributária e classificação da operação;
+ * o ADN calcula os valores de IBS e CBS a partir desses indicadores.
+ */
+export type IBSCBSDps = {
+  readonly finNFSe: string;      // finalidade da NFS-e (TSRTCFinNFSe)
+  readonly cIndOp: string;       // código indicador de operação, 6 díg. (TSRTCCodIndOp)
+  readonly indDest: 0 | 1;       // indicador do destinatário (TSRTCIndDest)
+  readonly cst: string;          // situação tributária, 3 díg. (TSRTCCodSitTrib) — '000' = integral
+  readonly cClassTrib: string;   // classificação tributária, 6 díg. (TSRTCCodClassTrib)
+};
+
+/**
  * Grupo `subst` do infDPS: presente apenas na NFS-e substituta. Ao receber uma
  * DPS com `chSubstda` preenchida, o ADN cancela a nota original e gera a substituta.
  */
@@ -54,4 +67,5 @@ export type DPSProps = {
   readonly tomador?: TomadorDPS;
   readonly servico: ServicoDPS;
   readonly valores: ValoresDPS;
+  readonly ibsCbs?: IBSCBSDps;   // grupo IBS/CBS (NT 007/2026 — Reforma Tributária)
 };

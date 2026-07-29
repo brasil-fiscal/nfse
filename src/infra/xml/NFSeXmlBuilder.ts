@@ -133,6 +133,7 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
       toma +
       serv +
       valores +
+      this.buildIBSCBS(dps) +
       `</infDPS>`;
 
     return (
@@ -140,6 +141,17 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
       `<DPS xmlns="${DPS_NAMESPACE}" versao="${DPS_VERSAO}">` +
       infDPS +
       `</DPS>`
+    );
+  }
+
+  private buildIBSCBS(dps: DPSProps): string {
+    const ibs = dps.ibsCbs;
+    if (!ibs) return '';
+    const gIBSCBS = tagGroup('gIBSCBS', tag('CST', ibs.cst) + tag('cClassTrib', ibs.cClassTrib));
+    const valores = tagGroup('valores', tagGroup('trib', gIBSCBS));
+    return tagGroup(
+      'IBSCBS',
+      tag('finNFSe', ibs.finNFSe) + tag('cIndOp', ibs.cIndOp) + tag('indDest', ibs.indDest) + valores
     );
   }
 }

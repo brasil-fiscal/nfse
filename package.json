@@ -15,7 +15,8 @@
     "prepublishOnly": "npm run build",
     "publish:npm": "npm publish --access public --registry=https://registry.npmjs.org",
     "publish:github": "npm publish --registry=https://npm.pkg.github.com",
-    "publish:all": "npm run publish:npm && npm run publish:github"
+    "publish:all": "npm run publish:npm && npm run publish:github",
+    "release": "node scripts/release.js"
   },
   "keywords": [
     "nfse",

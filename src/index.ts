@@ -23,6 +23,12 @@ export type {
 // Domínio (eventos)
 export type { CancelamentoInput, MotivoCancelamento } from './domain/evento';
 
+// DANFSe local (PDF a partir do XML autorizado)
+export { GerarDanfseUseCase } from './application/use-cases/GerarDanfseUseCase';
+export type { DanfseData, DanfsePessoa, DanfseOptions } from './application/use-cases/GerarDanfseUseCase';
+export { parseNFSeXml } from './infra/danfse/xml-parser';
+export { DanfseGenerator } from './infra/danfse/DanfseGenerator';
+
 // Contratos
 export type { NFSeXmlBuilder } from './contracts/NFSeXmlBuilder';
 export type { NFSeTransport, NFSeHttpResponse, NFSeBinaryResponse } from './contracts/NFSeTransport';

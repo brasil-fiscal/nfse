@@ -148,7 +148,7 @@ Respostas nao-2xx (fora 404 na consulta) lancam `NFSeRejectError` com `statusCod
 | [@brasil-fiscal/core](https://github.com/brasil-fiscal/core) | Estavel | Infraestrutura compartilhada |
 | [@brasil-fiscal/nfe](https://github.com/brasil-fiscal/nfe) | Estavel | NFe e NFC-e |
 | **@brasil-fiscal/nfse** | Beta | NFSe (este pacote) |
-| [@brasil-fiscal/cte](https://github.com/brasil-fiscal/cte) | Em desenvolvimento | CTe |
+| [@brasil-fiscal/cte](https://github.com/brasil-fiscal/cte) | Beta (0.x) | CT-e normal, modal rodoviario |
 | [@brasil-fiscal/mdfe](https://github.com/brasil-fiscal/mdfe) | Em desenvolvimento | MDFe |
 
 ## Requisitos

@@ -11,6 +11,8 @@ import { ConsultarDpsUseCase } from '../application/use-cases/ConsultarDpsUseCas
 import { ConsultarEventosUseCase } from '../application/use-cases/ConsultarEventosUseCase';
 import { CancelarNFSeUseCase } from '../application/use-cases/CancelarNFSeUseCase';
 import { BaixarDanfseUseCase } from '../application/use-cases/BaixarDanfseUseCase';
+import { GerarDanfseUseCase } from '../application/use-cases/GerarDanfseUseCase';
+import type { DanfseOptions } from '../infra/danfse/DanfseGenerator';
 import { CancelamentoEventoBuilder } from '../infra/xml/CancelamentoEventoBuilder';
 import { getAdnBaseUrl, NFSeEnvironment } from '../shared/constants/adn-urls';
 import { DPSProps, SubstituicaoDPS } from '../domain/dps';
@@ -162,5 +164,13 @@ export class NFSeCore {
     });
 
     return useCase.execute(chaveAcesso);
+  }
+
+  /**
+   * Gera o PDF do DANFSe localmente a partir do XML da NFS-e autorizada
+   * (leiaute v2.0). Não chama o ADN; requer `pdfkit` instalado.
+   */
+  async danfseLocal(xmlNfse: string, options?: DanfseOptions): Promise<Buffer> {
+    return new GerarDanfseUseCase().execute(xmlNfse, options);
   }
 }

@@ -48,5 +48,15 @@ if (publicadas.includes(version)) {
   console.log(`${name}@${version} ainda não foi publicada: publicando esta mesma versão.`);
 }
 
-console.log(`Publicando ${name}@${lerPkg().version}...`);
-run('npm run publish:all');
+const alvo = lerPkg().version;
+console.log(`Publicando ${name}@${alvo}...`);
+try {
+  run('npm run publish:all');
+} catch {
+  console.error(
+    `\nFalhou ao publicar ${name}@${alvo}. O motivo é a linha "npm error" acima.\n` +
+      'E409 "previously staged version": o npm queimou esse número (bug npm/cli#9889);\n' +
+      `suba a versão (npm version patch --no-git-tag-version) e rode de novo.`
+  );
+  process.exit(1);
+}

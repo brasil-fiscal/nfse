@@ -9,10 +9,25 @@ export type PrestadorDPS = {
   readonly regimeEspecialTributacao?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // regTrib.regEspTrib (obrigatório, default 0=Nenhum)
 };
 
+/**
+ * toma.end (TCEndereco). xLgr, nro e xBairro são obrigatórios no XSD: sem
+ * logradouro ou bairro o grupo é omitido; sem número vai "S/N". endNac só sai
+ * com IBGE (7 díg.) e CEP (8 díg.) válidos.
+ */
+export type EnderecoTomadorDPS = {
+  readonly logradouro?: string;       // xLgr
+  readonly numero?: string;           // nro
+  readonly complemento?: string;      // xCpl
+  readonly bairro?: string;           // xBairro
+  readonly codigoMunicipio?: string;  // endNac.cMun (IBGE)
+  readonly cep?: string;              // endNac.CEP
+};
+
 export type TomadorDPS = {
   readonly cnpj?: string;
   readonly cpf?: string;
   readonly nome?: string;      // xNome
+  readonly endereco?: EnderecoTomadorDPS; // end
   readonly telefone?: string;  // fone
   readonly email?: string;     // email
 };

@@ -15,6 +15,7 @@ export type {
   DPSAmbiente,
   PrestadorDPS,
   TomadorDPS,
+  EnderecoTomadorDPS,
   ServicoDPS,
   ValoresDPS,
   SubstituicaoDPS

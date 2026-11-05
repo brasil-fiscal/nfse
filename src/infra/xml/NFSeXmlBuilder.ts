@@ -1,6 +1,6 @@
 import { tag, tagGroup, formatNumber, formatDate } from '@brasil-fiscal/core';
 import { NFSeXmlBuilder } from '../../contracts/NFSeXmlBuilder';
-import { DPSProps } from '../../domain/dps';
+import { DPSProps, EnderecoTomadorDPS } from '../../domain/dps';
 import { gerarIdDps, normalizeSerieDps } from '../../shared/helpers/dps-id';
 
 const DPS_NAMESPACE = 'http://www.sped.fazenda.gov.br/nfse';
@@ -22,6 +22,27 @@ function dataCompetencia(date: Date): string {
   const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(date.getUTCDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
+}
+
+// toma.end (TCEndereco): [endNac(cMun, CEP)] xLgr nro [xCpl] xBairro.
+function buildEnderecoTomador(e?: EnderecoTomadorDPS): string {
+  const lgr = e?.logradouro?.trim();
+  const bairro = e?.bairro?.trim();
+  if (!e || !lgr || !bairro) return '';
+  const cMun = onlyDigits(e.codigoMunicipio ?? '');
+  const cep = onlyDigits(e.cep ?? '');
+  const endNac =
+    cMun.length === 7 && cep.length === 8
+      ? tagGroup('endNac', tag('cMun', cMun) + tag('CEP', cep))
+      : '';
+  return tagGroup(
+    'end',
+    endNac +
+      tag('xLgr', lgr) +
+      tag('nro', e.numero?.trim() || 'S/N') +
+      tag('xCpl', e.complemento?.trim()) +
+      tag('xBairro', bairro)
+  );
 }
 
 export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
@@ -75,6 +96,7 @@ export class DefaultNFSeXmlBuilder implements NFSeXmlBuilder {
             'toma',
             tomaId +
               tag('xNome', dps.tomador.nome) +
+              buildEnderecoTomador(dps.tomador.endereco) +
               tag('fone', dps.tomador.telefone) +
               tag('email', dps.tomador.email)
           )

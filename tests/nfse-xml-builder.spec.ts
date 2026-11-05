@@ -93,6 +93,53 @@ test('tomador com CPF: emite toma com <CPF>', () => {
   assert.match(xml, /<toma><CPF>12345678909<\/CPF><xNome>Fulano<\/xNome><\/toma>/);
 });
 
+const endereco = {
+  logradouro: 'Av. Brasil',
+  numero: '100',
+  complemento: 'Sala 2',
+  bairro: 'Jardim',
+  codigoMunicipio: '5105606',
+  cep: '78525-000'
+};
+
+test('tomador com endereço: emite <end> entre xNome e fone, na ordem do XSD', () => {
+  const xml = new DefaultNFSeXmlBuilder().build({
+    ...dps,
+    tomador: { cpf: '12345678909', nome: 'Fulano', telefone: '66999990000', endereco }
+  });
+  assert.match(
+    xml,
+    /<toma><CPF>12345678909<\/CPF><xNome>Fulano<\/xNome><end><endNac><cMun>5105606<\/cMun><CEP>78525000<\/CEP><\/endNac><xLgr>Av\. Brasil<\/xLgr><nro>100<\/nro><xCpl>Sala 2<\/xCpl><xBairro>Jardim<\/xBairro><\/end><fone>66999990000<\/fone><\/toma>/
+  );
+});
+
+test('endereço sem IBGE/CEP válidos: emite <end> sem <endNac>', () => {
+  const xml = new DefaultNFSeXmlBuilder().build({
+    ...dps,
+    tomador: { cpf: '12345678909', nome: 'Fulano', endereco: { ...endereco, codigoMunicipio: undefined, cep: '123' } }
+  });
+  assert.match(xml, /<end><xLgr>Av\. Brasil<\/xLgr><nro>100<\/nro><xCpl>Sala 2<\/xCpl><xBairro>Jardim<\/xBairro><\/end>/);
+});
+
+test('endereço sem número: usa S/N (nro é obrigatório no XSD)', () => {
+  const xml = new DefaultNFSeXmlBuilder().build({
+    ...dps,
+    tomador: { cpf: '12345678909', nome: 'Fulano', endereco: { ...endereco, numero: ' ' } }
+  });
+  assert.match(xml, /<nro>S\/N<\/nro>/);
+});
+
+test('endereço sem logradouro ou bairro: OMITE <end> (campos obrigatórios no XSD)', () => {
+  for (const e of [{ ...endereco, logradouro: '' }, { ...endereco, bairro: undefined }]) {
+    const xml = new DefaultNFSeXmlBuilder().build({
+      ...dps,
+      tomador: { cpf: '12345678909', nome: 'Fulano', endereco: e }
+    });
+    assert.doesNotMatch(xml, /<end>/);
+    assert.match(xml, /<toma><CPF>12345678909<\/CPF><xNome>Fulano<\/xNome><\/toma>/);
+  }
+});
+
 test('build sem substituicao não emite o grupo subst', () => {
   const xml = new DefaultNFSeXmlBuilder().build(dps);
   assert.doesNotMatch(xml, /<subst>/);

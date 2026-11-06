@@ -1,4 +1,8 @@
 import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import assert from 'node:assert/strict';
 import { DefaultNFSeXmlBuilder } from '../src/infra/xml/NFSeXmlBuilder';
 import { DPSProps } from '../src/domain/dps';
@@ -113,13 +117,36 @@ test('tomador com endereço: emite <end> entre xNome e fone, na ordem do XSD', (
   );
 });
 
-test('endereço sem IBGE/CEP válidos: emite <end> sem <endNac>', () => {
-  const xml = new DefaultNFSeXmlBuilder().build({
-    ...dps,
-    tomador: { cpf: '12345678909', nome: 'Fulano', endereco: { ...endereco, codigoMunicipio: undefined, cep: '123' } }
-  });
-  assert.match(xml, /<end><xLgr>Av\. Brasil<\/xLgr><nro>100<\/nro><xCpl>Sala 2<\/xCpl><xBairro>Jardim<\/xBairro><\/end>/);
+test('endereço sem IBGE/CEP válidos: OMITE <end> (endNac é obrigatório dentro de end → E1235)', () => {
+  for (const e of [{ ...endereco, codigoMunicipio: undefined }, { ...endereco, cep: '123' }]) {
+    const xml = new DefaultNFSeXmlBuilder().build({ ...dps, tomador: { cpf: '12345678909', nome: 'Fulano', endereco: e } });
+    assert.doesNotMatch(xml, /<end>/);
+    assert.match(xml, /<toma><CPF>12345678909<\/CPF><xNome>Fulano<\/xNome><\/toma>/);
+  }
 });
+
+// Valida no XSD 1.01 (o que o ADN de produção usa: lá o choice endNac|endExt é
+// obrigatório dentro de <end>; no 1.00 era opcional). O libxml2 não entende as âncoras
+// ^...$ dos patterns do 1.01 e acusa falso positivo nelas (ex.: serie) — só essas são ignoradas.
+const xsdErrors = (xml: string): string[] => {
+  const file = join(mkdtempSync(join(tmpdir(), 'dps-')), 'dps.xml');
+  writeFileSync(file, xml);
+  const xsd = join(__dirname, '..', 'schemas', '1.01', 'DPS_v1.01.xsd');
+  const r = spawnSync('xmllint', ['--noout', '--schema', xsd, file], { encoding: 'utf-8' });
+  return r.stderr.split('\n').filter((l) => l.includes('validity error') && !l.includes("pattern '^"));
+};
+
+for (const [nome, end] of [
+  ['completo', endereco],
+  ['sem IBGE', { ...endereco, codigoMunicipio: undefined }],
+  ['CEP inválido', { ...endereco, cep: '123' }]
+] as const) {
+  test(`DPS com endereço ${nome} valida no XSD oficial DPS_v1.01`, (t) => {
+    if (spawnSync('xmllint', ['--version']).error) return t.skip('xmllint indisponível');
+    const xml = new DefaultNFSeXmlBuilder().build({ ...dps, tomador: { cnpj: '34028316001690', nome: 'Correios', endereco: end } });
+    assert.deepEqual(xsdErrors(xml), []);
+  });
+}
 
 test('endereço sem número: usa S/N (nro é obrigatório no XSD)', () => {
   const xml = new DefaultNFSeXmlBuilder().build({

@@ -14,7 +14,8 @@ export class NFSeRejectError extends DFeError {
     public readonly corpo?: string
   ) {
     const first = erros[0];
-    const detalhe = first ? `: [${first.codigo ?? ''}] ${first.descricao ?? ''}`.trimEnd() : '';
+    const compl = first?.complemento ? ` (${first.complemento})` : '';
+    const detalhe = first ? `: [${first.codigo ?? ''}] ${first.descricao ?? ''}${compl}`.trimEnd() : '';
     super(`ADN rejeitou a DPS (HTTP ${statusCode})${detalhe}`);
     this.name = 'NFSeRejectError';
   }

@@ -24,20 +24,19 @@ function dataCompetencia(date: Date): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// toma.end (TCEndereco): [endNac(cMun, CEP)] xLgr nro [xCpl] xBairro.
+// toma.end (TCEndereco): (endNac(cMun, CEP) | endExt) xLgr nro [xCpl] xBairro.
+// O choice endNac|endExt é obrigatório dentro de <end>: sem IBGE (7) + CEP (8) válidos
+// o grupo inteiro é omitido (end é opcional no toma) — <end> sem endNac dá E1235 no ADN.
 function buildEnderecoTomador(e?: EnderecoTomadorDPS): string {
   const lgr = e?.logradouro?.trim();
   const bairro = e?.bairro?.trim();
   if (!e || !lgr || !bairro) return '';
   const cMun = onlyDigits(e.codigoMunicipio ?? '');
   const cep = onlyDigits(e.cep ?? '');
-  const endNac =
-    cMun.length === 7 && cep.length === 8
-      ? tagGroup('endNac', tag('cMun', cMun) + tag('CEP', cep))
-      : '';
+  if (cMun.length !== 7 || cep.length !== 8) return '';
   return tagGroup(
     'end',
-    endNac +
+    tagGroup('endNac', tag('cMun', cMun) + tag('CEP', cep)) +
       tag('xLgr', lgr) +
       tag('nro', e.numero?.trim() || 'S/N') +
       tag('xCpl', e.complemento?.trim()) +

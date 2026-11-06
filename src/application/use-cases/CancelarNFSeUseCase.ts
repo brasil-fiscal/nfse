@@ -55,6 +55,7 @@ export class CancelarNFSeUseCase {
       };
     }
 
-    throw new NFSeRejectError(res.statusCode, parseAdnErros(res.body));
+    const corpo = res.body;
+    throw new NFSeRejectError(res.statusCode, parseAdnErros(corpo), corpo.slice(0, 2000));
   }
 }

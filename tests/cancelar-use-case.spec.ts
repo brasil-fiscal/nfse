@@ -105,3 +105,15 @@ test('execute expõe o motivo quando o ADN responde com "erro" singular', async 
   };
   await assert.rejects(new CancelarNFSeUseCase(makeDeps(transport)).execute(input), /\[E1235\] motivo real/);
 });
+
+test('NFSeRejectError carrega o corpo cru da resposta', async () => {
+  const body = JSON.stringify({ qualquer: 'formato' });
+  const transport: NFSeTransport = {
+    async postJson(): Promise<NFSeHttpResponse> { return { statusCode: 400, body }; },
+    async get(): Promise<NFSeHttpResponse> { throw new Error('não usado'); },
+    async getBinary(): Promise<NFSeBinaryResponse> { throw new Error('não usado'); }
+  };
+  const err = await new CancelarNFSeUseCase(makeDeps(transport)).execute(input).catch((e) => e);
+  assert.ok(err instanceof NFSeRejectError);
+  assert.equal(err.corpo, body);
+});

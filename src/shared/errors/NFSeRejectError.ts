@@ -9,7 +9,9 @@ export type NFSeErro = {
 export class NFSeRejectError extends DFeError {
   constructor(
     public readonly statusCode: number,
-    public readonly erros: NFSeErro[]
+    public readonly erros: NFSeErro[],
+    /** Corpo cru da resposta do ADN (truncado), para log/diagnóstico. */
+    public readonly corpo?: string
   ) {
     const first = erros[0];
     const detalhe = first ? `: [${first.codigo ?? ''}] ${first.descricao ?? ''}`.trimEnd() : '';

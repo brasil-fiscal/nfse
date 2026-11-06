@@ -29,6 +29,7 @@ export class BaixarDanfseUseCase {
       return res.body;
     }
 
-    throw new NFSeRejectError(res.statusCode, parseAdnErros(res.body.toString('utf-8')));
+    const corpo = res.body.toString('utf-8');
+    throw new NFSeRejectError(res.statusCode, parseAdnErros(corpo), corpo.slice(0, 2000));
   }
 }

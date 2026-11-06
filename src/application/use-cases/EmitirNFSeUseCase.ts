@@ -3,7 +3,8 @@ import { NFSeXmlBuilder } from '../../contracts/NFSeXmlBuilder';
 import { NFSeTransport } from '../../contracts/NFSeTransport';
 import { DPSProps } from '../../domain/dps';
 import { EmitirResult } from '../../core/types';
-import { NFSeRejectError, NFSeErro } from '../../shared/errors/NFSeRejectError';
+import { NFSeRejectError } from '../../shared/errors/NFSeRejectError';
+import { parseAdnErros } from '../../shared/helpers/adn-response';
 import { gzipBase64, gunzipBase64 } from '../../shared/helpers/compression';
 
 export type EmitirNFSeDeps = {
@@ -19,10 +20,6 @@ type AdnSuccess = {
   idDps?: string;
   nfseXmlGZipB64?: string;
   alertas?: unknown;
-};
-
-type AdnError = {
-  erros?: Array<{ Codigo?: string; Descricao?: string; Complemento?: string }>;
 };
 
 export class EmitirNFSeUseCase {
@@ -51,17 +48,6 @@ export class EmitirNFSeUseCase {
       };
     }
 
-    let erros: NFSeErro[] = [];
-    try {
-      const body = JSON.parse(res.body) as AdnError;
-      erros = (body.erros ?? []).map((e) => ({
-        codigo: e.Codigo,
-        descricao: e.Descricao,
-        complemento: e.Complemento ?? undefined
-      }));
-    } catch {
-      // corpo não-JSON: mantém lista vazia
-    }
-    throw new NFSeRejectError(res.statusCode, erros);
+    throw new NFSeRejectError(res.statusCode, parseAdnErros(res.body));
   }
 }

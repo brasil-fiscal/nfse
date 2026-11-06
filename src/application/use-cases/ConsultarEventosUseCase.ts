@@ -1,16 +1,14 @@
 import type { CertificateProvider } from '@brasil-fiscal/core';
 import { NFSeTransport } from '../../contracts/NFSeTransport';
 import { ConsultaEventosResult } from '../../core/types';
-import { NFSeRejectError, NFSeErro } from '../../shared/errors/NFSeRejectError';
-import { extractGzipXmlValues } from '../../shared/helpers/adn-response';
+import { NFSeRejectError } from '../../shared/errors/NFSeRejectError';
+import { extractGzipXmlValues, parseAdnErros } from '../../shared/helpers/adn-response';
 
 export type ConsultarEventosDeps = {
   readonly certificate: CertificateProvider;
   readonly transport: NFSeTransport;
   readonly baseUrl: string;
 };
-
-type AdnError = { erros?: Array<{ Codigo?: string; Descricao?: string; Complemento?: string }> };
 
 /**
  * Lista os eventos vinculados a uma NFS-e (GET /nfse/{chave}/eventos).
@@ -39,17 +37,6 @@ export class ConsultarEventosUseCase {
       return { eventos: [], body: res.body, statusHttp: res.statusCode };
     }
 
-    let erros: NFSeErro[] = [];
-    try {
-      const body = JSON.parse(res.body) as AdnError;
-      erros = (body.erros ?? []).map((e) => ({
-        codigo: e.Codigo,
-        descricao: e.Descricao,
-        complemento: e.Complemento ?? undefined
-      }));
-    } catch {
-      // corpo não-JSON
-    }
-    throw new NFSeRejectError(res.statusCode, erros);
+    throw new NFSeRejectError(res.statusCode, parseAdnErros(res.body));
   }
 }

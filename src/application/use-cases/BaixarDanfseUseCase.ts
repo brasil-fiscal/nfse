@@ -1,15 +1,12 @@
 import type { CertificateProvider } from '@brasil-fiscal/core';
 import { NFSeTransport } from '../../contracts/NFSeTransport';
-import { NFSeRejectError, NFSeErro } from '../../shared/errors/NFSeRejectError';
+import { NFSeRejectError } from '../../shared/errors/NFSeRejectError';
+import { parseAdnErros } from '../../shared/helpers/adn-response';
 
 export type BaixarDanfseDeps = {
   readonly certificate: CertificateProvider;
   readonly transport: NFSeTransport;
   readonly baseUrl: string;
-};
-
-type AdnError = {
-  erros?: Array<{ Codigo?: string; Descricao?: string; Complemento?: string }>;
 };
 
 /**
@@ -32,17 +29,6 @@ export class BaixarDanfseUseCase {
       return res.body;
     }
 
-    let erros: NFSeErro[] = [];
-    try {
-      const body = JSON.parse(res.body.toString('utf-8')) as AdnError;
-      erros = (body.erros ?? []).map((e) => ({
-        codigo: e.Codigo,
-        descricao: e.Descricao,
-        complemento: e.Complemento ?? undefined
-      }));
-    } catch {
-      // corpo não-JSON (ex.: HTML de erro): mantém lista vazia
-    }
-    throw new NFSeRejectError(res.statusCode, erros);
+    throw new NFSeRejectError(res.statusCode, parseAdnErros(res.body.toString('utf-8')));
   }
 }

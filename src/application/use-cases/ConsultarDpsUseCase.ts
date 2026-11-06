@@ -1,7 +1,8 @@
 import type { CertificateProvider } from '@brasil-fiscal/core';
 import { NFSeTransport } from '../../contracts/NFSeTransport';
 import { ConsultaDpsResult } from '../../core/types';
-import { NFSeRejectError, NFSeErro } from '../../shared/errors/NFSeRejectError';
+import { NFSeRejectError } from '../../shared/errors/NFSeRejectError';
+import { parseAdnErros } from '../../shared/helpers/adn-response';
 
 export type ConsultarDpsDeps = {
   readonly certificate: CertificateProvider;
@@ -10,7 +11,6 @@ export type ConsultarDpsDeps = {
 };
 
 type AdnConsultaDps = { chaveAcesso?: string };
-type AdnError = { erros?: Array<{ Codigo?: string; Descricao?: string; Complemento?: string }> };
 
 /**
  * Consulta, pelo Id da DPS, a chave da NFS-e correspondente (GET /dps/{id}).
@@ -34,17 +34,6 @@ export class ConsultarDpsUseCase {
       return { encontrada: false, chaveAcesso: '', statusHttp: res.statusCode };
     }
 
-    let erros: NFSeErro[] = [];
-    try {
-      const body = JSON.parse(res.body) as AdnError;
-      erros = (body.erros ?? []).map((e) => ({
-        codigo: e.Codigo,
-        descricao: e.Descricao,
-        complemento: e.Complemento ?? undefined
-      }));
-    } catch {
-      // corpo não-JSON
-    }
-    throw new NFSeRejectError(res.statusCode, erros);
+    throw new NFSeRejectError(res.statusCode, parseAdnErros(res.body));
   }
 }

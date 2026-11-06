@@ -3,7 +3,8 @@ import { NFSeTransport } from '../../contracts/NFSeTransport';
 import { CancelamentoEventoBuilder } from '../../infra/xml/CancelamentoEventoBuilder';
 import { CancelamentoInput } from '../../domain/evento';
 import { CancelarResult } from '../../core/types';
-import { NFSeRejectError, NFSeErro } from '../../shared/errors/NFSeRejectError';
+import { NFSeRejectError } from '../../shared/errors/NFSeRejectError';
+import { parseAdnErros } from '../../shared/helpers/adn-response';
 import { gzipBase64, gunzipBase64 } from '../../shared/helpers/compression';
 
 export type CancelarNFSeDeps = {
@@ -12,10 +13,6 @@ export type CancelarNFSeDeps = {
   readonly certificate: CertificateProvider;
   readonly transport: NFSeTransport;
   readonly baseUrl: string;
-};
-
-type AdnError = {
-  erros?: Array<{ Codigo?: string; Descricao?: string; Complemento?: string }>;
 };
 
 /** Extrai e descomprime o primeiro campo de resposta terminado em "XmlGZipB64". */
@@ -58,17 +55,6 @@ export class CancelarNFSeUseCase {
       };
     }
 
-    let erros: NFSeErro[] = [];
-    try {
-      const body = JSON.parse(res.body) as AdnError;
-      erros = (body.erros ?? []).map((e) => ({
-        codigo: e.Codigo,
-        descricao: e.Descricao,
-        complemento: e.Complemento ?? undefined
-      }));
-    } catch {
-      // corpo não-JSON: mantém lista vazia
-    }
-    throw new NFSeRejectError(res.statusCode, erros);
+    throw new NFSeRejectError(res.statusCode, parseAdnErros(res.body));
   }
 }

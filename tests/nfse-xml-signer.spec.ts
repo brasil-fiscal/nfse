@@ -65,14 +65,14 @@ test('sign lança erro se não houver infDPS', () => {
 test('parametrizado para eventos: assina infPedReg e insere Signature irmã', () => {
   const { cert, publicKeyPem } = makeCert();
   const xml =
-    '<pedidoRegistroEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">' +
-    '<infPedReg Id="PRE123"><tpAmb>2</tpAmb></infPedReg></pedidoRegistroEvento>';
+    '<pedRegEvento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">' +
+    '<infPedReg Id="PRE123"><tpAmb>2</tpAmb></infPedReg></pedRegEvento>';
 
-  const signed = new NFSeXmlSigner('infPedReg', 'pedidoRegistroEvento').sign(xml, cert);
+  const signed = new NFSeXmlSigner('infPedReg', 'pedRegEvento').sign(xml, cert);
 
   assert.match(signed, /<Reference URI="#PRE123">/);
   assert.ok(signed.indexOf('</infPedReg>') < signed.indexOf('<Signature'));
-  assert.ok(signed.indexOf('<Signature') < signed.indexOf('</pedidoRegistroEvento>'));
+  assert.ok(signed.indexOf('<Signature') < signed.indexOf('</pedRegEvento>'));
 
   // assinatura válida
   const signedInfo = signed.match(/<SignedInfo[\s\S]*?<\/SignedInfo>/)![0];

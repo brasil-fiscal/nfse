@@ -14,7 +14,7 @@ const RSA_SHA256_ALGORITHM = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
  * o fechamento do elemento, dentro do elemento pai.
  *
  * Por padrão assina a DPS (<infDPS> dentro de <DPS>). Para eventos, instancie
- * com ('infPedReg', 'pedidoRegistroEvento').
+ * com ('infPedReg', 'pedRegEvento').
  */
 export class NFSeXmlSigner implements XmlSigner {
   constructor(

@@ -1,10 +1,6 @@
 import { tag, tagGroup, formatDate } from '@brasil-fiscal/core';
 import { CancelamentoInput } from '../../domain/evento';
-import {
-  gerarIdEvento,
-  normalizeNPedRegEvento,
-  TP_EVENTO_CANCELAMENTO
-} from '../../shared/helpers/evento-id';
+import { gerarIdEvento, TP_EVENTO_CANCELAMENTO } from '../../shared/helpers/evento-id';
 
 const NFSE_NAMESPACE = 'http://www.sped.fazenda.gov.br/nfse';
 const EVENTO_VERSAO = '1.00';
@@ -16,7 +12,8 @@ function onlyDigits(v: string): string {
 
 /**
  * Monta o XML do pedido de registro de evento de cancelamento (e101101) da
- * NFS-e Nacional. Assina-se o elemento <infPedReg>; a <Signature> entra como
+ * NFS-e Nacional, conforme pedRegEvento_v1.00/1.01.xsd: raiz <pedRegEvento>,
+ * infPedReg = tpAmb, verAplic, dhEvento, CNPJAutor|CPFAutor, chNFSe, e101101. Assina-se o elemento <infPedReg>; a <Signature> entra como
  * irmã, logo após </infPedReg>.
  */
 export class CancelamentoEventoBuilder {
@@ -29,13 +26,7 @@ export class CancelamentoEventoBuilder {
     const chave = onlyDigits(input.chaveAcesso);
     const ambiente = input.ambiente ?? 2;
     const dhEvento = input.dataEvento ?? new Date();
-    const nPedReg = normalizeNPedRegEvento(input.nPedRegEvento ?? 1);
-
-    const id = gerarIdEvento({
-      chaveAcesso: chave,
-      tipoEvento: TP_EVENTO_CANCELAMENTO,
-      nPedRegEvento: nPedReg
-    });
+    const id = gerarIdEvento({ chaveAcesso: chave, tipoEvento: TP_EVENTO_CANCELAMENTO });
 
     const autor = input.autorCnpj
       ? tag('CNPJAutor', onlyDigits(input.autorCnpj))
@@ -53,15 +44,14 @@ export class CancelamentoEventoBuilder {
       tag('dhEvento', formatDate(dhEvento)) +
       autor +
       tag('chNFSe', chave) +
-      tag('nPedRegEvento', nPedReg) +
       e101101 +
       `</infPedReg>`;
 
     return (
       `<?xml version="1.0" encoding="UTF-8"?>` +
-      `<pedidoRegistroEvento xmlns="${NFSE_NAMESPACE}" versao="${EVENTO_VERSAO}">` +
+      `<pedRegEvento xmlns="${NFSE_NAMESPACE}" versao="${EVENTO_VERSAO}">` +
       infPedReg +
-      `</pedidoRegistroEvento>`
+      `</pedRegEvento>`
     );
   }
 }

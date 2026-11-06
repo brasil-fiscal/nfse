@@ -143,7 +143,7 @@ export class NFSeCore {
 
     const useCase = new CancelarNFSeUseCase({
       builder: new CancelamentoEventoBuilder(),
-      signer: new NFSeXmlSigner('infPedReg', 'pedidoRegistroEvento'),
+      signer: new NFSeXmlSigner('infPedReg', 'pedRegEvento'),
       certificate: this.certificate,
       transport: this.transport,
       baseUrl: getAdnBaseUrl(this.ambiente)

@@ -35,7 +35,7 @@ const input: CancelamentoInput = {
 function makeDeps(transport: NFSeTransport) {
   return {
     builder: new CancelamentoEventoBuilder(),
-    signer: new NFSeXmlSigner('infPedReg', 'pedidoRegistroEvento'),
+    signer: new NFSeXmlSigner('infPedReg', 'pedRegEvento'),
     certificate: fakeCertProvider(),
     transport,
     baseUrl: 'https://sefin.producaorestrita.nfse.gov.br/SefinNacional'
